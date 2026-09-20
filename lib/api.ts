@@ -38,15 +38,15 @@ async function handle<T>(res: Response): Promise<T> {
 
 export const api = {
   health(): Promise<HealthResponse> {
-    return fetch(`${API_V1}/health`, { cache: "no-store" }).then(handle);
+    return fetch(`${API_V1}/health`, { cache: "no-store" }).then(handle<HealthResponse>);
   },
 
   listProjects(): Promise<ProjectListItem[]> {
-    return fetch(`${API_V1}/projects`, { cache: "no-store" }).then(handle);
+    return fetch(`${API_V1}/projects`, { cache: "no-store" }).then(handle<ProjectListItem[]>);
   },
 
   getProject(id: string): Promise<ProjectDetail> {
-    return fetch(`${API_V1}/projects/${id}`, { cache: "no-store" }).then(handle);
+    return fetch(`${API_V1}/projects/${id}`, { cache: "no-store" }).then(handle<ProjectDetail>);
   },
 
   createProject(input: {
@@ -63,15 +63,15 @@ export const api = {
     if (input.tone) form.append("tone", input.tone);
     if (input.visualStyle) form.append("visual_style", input.visualStyle);
 
-    return fetch(`${API_V1}/projects`, { method: "POST", body: form }).then(handle);
+    return fetch(`${API_V1}/projects`, { method: "POST", body: form }).then(handle<ProjectResponse>);
   },
 
   deleteProject(id: string): Promise<void> {
-    return fetch(`${API_V1}/projects/${id}`, { method: "DELETE" }).then(handle);
+    return fetch(`${API_V1}/projects/${id}`, { method: "DELETE" }).then(handle<void>);
   },
 
   runPipeline(id: string): Promise<ProjectResponse> {
-    return fetch(`${API_V1}/projects/${id}/run-pipeline`, { method: "POST" }).then(handle);
+    return fetch(`${API_V1}/projects/${id}/run-pipeline`, { method: "POST" }).then(handle<ProjectResponse>);
   },
 
   updateScene(projectId: string, sceneId: string, payload: SceneUpdatePayload): Promise<SceneResponse> {
@@ -79,7 +79,7 @@ export const api = {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    }).then(handle);
+    }).then(handle<SceneResponse>);
   },
 
   updateCharacter(
@@ -91,7 +91,7 @@ export const api = {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    }).then(handle);
+    }).then(handle<CharacterResponse>);
   },
 };
 
