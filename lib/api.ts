@@ -9,7 +9,11 @@ import type {
   SceneUpdatePayload,
 } from "./types";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Strip any trailing slash(es) - if NEXT_PUBLIC_API_URL is set to
+// "https://host.com/" instead of "https://host.com", the naive template
+// string below would produce a double slash ("https://host.com//api/v1"),
+// which doesn't match any FastAPI route and 404s on every single request.
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
 const API_V1 = `${API_BASE_URL}/api/v1`;
 
 export class ApiError extends Error {
