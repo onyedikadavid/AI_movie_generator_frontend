@@ -34,8 +34,13 @@ export default function EditProjectPage() {
   }
 
   const stillWriting = project.status === "CREATED" || project.status === "TRANSCRIBING" || project.status === "GENERATING_SCRIPT";
-  const locked = project.status !== "SCRIPT_READY" && project.status !== "FAILED";
-  const canGenerate = project.status === "SCRIPT_READY" || project.status === "FAILED" || project.status === "COMPLETED";
+  const locked =
+    project.status !== "SCRIPT_READY" && project.status !== "FAILED" && project.status !== "CANCELLED";
+  const canGenerate =
+    project.status === "SCRIPT_READY" ||
+    project.status === "FAILED" ||
+    project.status === "COMPLETED" ||
+    project.status === "CANCELLED";
 
   async function handleStartGeneration() {
     setStarting(true);
@@ -79,13 +84,25 @@ export default function EditProjectPage() {
           </div>
         </div>
         <Button onClick={handleStartGeneration} loading={starting} disabled={!canGenerate}>
-          {project.status === "FAILED" ? "Retry generation" : project.status === "COMPLETED" ? "Regenerate" : "Start generation"}
+          {project.status === "FAILED"
+            ? "Retry generation"
+            : project.status === "CANCELLED"
+              ? "Start generation again"
+              : project.status === "COMPLETED"
+                ? "Regenerate"
+                : "Start generation"}
         </Button>
       </div>
 
       {project.status === "FAILED" && project.error_message && (
         <div className="rounded-card border border-cut/40 bg-cut/10 px-4 py-3 text-sm text-cut">
           Last run failed: {project.error_message}
+        </div>
+      )}
+
+      {project.status === "CANCELLED" && (
+        <div className="rounded-card border border-ink-border bg-ink-surface px-4 py-3 text-sm text-paper-muted">
+          Generation was stopped before it finished. Review or edit anything below, then start it again when ready.
         </div>
       )}
       {startError && (

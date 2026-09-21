@@ -5,7 +5,8 @@ import { StatusBadge, statusBarColor } from "./StatusBadge";
 
 function targetHref(project: ProjectListItem): string {
   if (project.status === "COMPLETED") return `/projects/${project.id}/player`;
-  if (project.status === "SCRIPT_READY" || project.status === "FAILED") return `/projects/${project.id}/edit`;
+  if (project.status === "SCRIPT_READY" || project.status === "FAILED" || project.status === "CANCELLED")
+    return `/projects/${project.id}/edit`;
   return `/projects/${project.id}/player`; // in-flight -> show progress
 }
 
@@ -33,7 +34,7 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
           <span className="inline-flex items-center gap-1 text-xs text-paper-faint group-hover:text-tally">
             <PlayCircle className="h-3.5 w-3.5" /> Watch
           </span>
-        ) : project.status === "SCRIPT_READY" || project.status === "FAILED" ? (
+        ) : project.status === "SCRIPT_READY" || project.status === "FAILED" || project.status === "CANCELLED" ? (
           <span className="inline-flex items-center gap-1 text-xs text-paper-faint group-hover:text-tally">
             <Pencil className="h-3.5 w-3.5" /> Review
           </span>

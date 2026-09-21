@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, Pencil, RotateCcw } from "lucide-react";
+import { Loader2, Pencil, RotateCcw, Square } from "lucide-react";
 import { useProjectPolling } from "@/hooks/useProjectPolling";
 import { mediaUrl, api, ApiError } from "@/lib/api";
 import { ProgressTracker } from "@/components/ProgressTracker";
@@ -15,6 +15,8 @@ export default function PlayerPage() {
   const { project, loading, error } = useProjectPolling(params.id, 4000);
   const [retrying, setRetrying] = useState(false);
   const [retryError, setRetryError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -33,7 +35,8 @@ export default function PlayerPage() {
   }
 
   const videoUrl = mediaUrl(project.final_video_path);
-  const isTerminal = project.status === "COMPLETED" || project.status === "FAILED";
+  const isTerminal =
+    project.status === "COMPLETED" || project.status === "FAILED" || project.status === "CANCELLED";
 
   async function retry() {
     setRetrying(true);
@@ -44,6 +47,18 @@ export default function PlayerPage() {
       setRetryError(e instanceof ApiError ? e.message : "Couldn't restart generation.");
     } finally {
       setRetrying(false);
+    }
+  }
+
+  async function cancel() {
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      await api.cancelProject(project!.id);
+    } catch (e) {
+      setCancelError(e instanceof ApiError ? e.message : "Couldn't cancel generation.");
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -67,6 +82,26 @@ export default function PlayerPage() {
       {!isTerminal && (
         <div className="rounded-card border border-ink-border bg-ink-surface p-6">
           <ProgressTracker status={project.status} />
+          <div className="mt-5 flex items-center gap-3 border-t border-ink-border pt-4">
+            <Button variant="ghost" onClick={cancel} loading={cancelling}>
+              <Square className="h-3.5 w-3.5" /> Stop
+            </Button>
+            {cancelError && <p className="text-xs text-cut">{cancelError}</p>}
+          </div>
+        </div>
+      )}
+
+      {project.status === "CANCELLED" && (
+        <div className="rounded-card border border-ink-border bg-ink-surface p-5">
+          <p className="text-sm text-paper-muted">
+            Generation was stopped{project.error_message ? ` (${project.error_message})` : "."}
+          </p>
+          {retryError && <p className="mt-1 text-xs text-cut">{retryError}</p>}
+          <div className="mt-3">
+            <Button variant="secondary" onClick={retry} loading={retrying}>
+              <RotateCcw className="h-3.5 w-3.5" /> Start generation again
+            </Button>
+          </div>
         </div>
       )}
 

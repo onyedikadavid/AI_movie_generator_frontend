@@ -78,6 +78,10 @@ export const api = {
     return fetch(`${API_V1}/projects/${id}/run-pipeline`, { method: "POST" }).then(handle<ProjectResponse>);
   },
 
+  cancelProject(id: string): Promise<ProjectResponse> {
+    return fetch(`${API_V1}/projects/${id}/cancel`, { method: "POST" }).then(handle<ProjectResponse>);
+  },
+
   updateScene(projectId: string, sceneId: string, payload: SceneUpdatePayload): Promise<SceneResponse> {
     return fetch(`${API_V1}/projects/${projectId}/scenes/${sceneId}`, {
       method: "PATCH",

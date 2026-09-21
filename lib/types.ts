@@ -12,7 +12,8 @@ export type ProjectStatus =
   | "GENERATING_AUDIO"
   | "COMPOSITING"
   | "COMPLETED"
-  | "FAILED";
+  | "FAILED"
+  | "CANCELLED";
 
 export const IN_FLIGHT_STATUSES: ProjectStatus[] = [
   // Included so polling doesn't stop in the brief window right after project
@@ -39,6 +40,7 @@ export const STATUS_LABELS: Record<ProjectStatus, string> = {
   COMPOSITING: "Compositing final cut",
   COMPLETED: "Completed",
   FAILED: "Failed",
+  CANCELLED: "Cancelled",
 };
 
 // Ordered stages used to drive the progress tracker on the player view.
