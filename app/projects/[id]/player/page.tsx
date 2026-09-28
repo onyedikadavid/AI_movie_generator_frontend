@@ -7,6 +7,7 @@ import { mediaUrl, api, ApiError } from "@/lib/api";
 import { ProgressTracker } from "@/components/ProgressTracker";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/Button";
+import { ErrorDetails } from "@/components/ErrorDetails";
 import { useState } from "react";
 
 export default function PlayerPage() {
@@ -106,9 +107,10 @@ export default function PlayerPage() {
       )}
 
       {project.status === "FAILED" && (
-        <div className="rounded-card border border-cut/40 bg-cut/10 p-5">
-          <p className="text-sm text-cut">Generation failed: {project.error_message || "Unknown error."}</p>
-          {retryError && <p className="mt-1 text-xs text-cut">{retryError}</p>}
+        <div className="rounded-card border border-cut/40 bg-cut/10 p-5 text-cut">
+          <p className="text-sm font-medium">Generation failed</p>
+          <ErrorDetails message={project.error_message || "Unknown error."} className="mt-1" />
+          {retryError && <p className="mt-2 text-xs">{retryError}</p>}
           <div className="mt-3">
             <Button variant="danger" onClick={retry} loading={retrying}>
               <RotateCcw className="h-3.5 w-3.5" /> Retry generation

@@ -9,6 +9,7 @@ import { CharacterCard } from "@/components/CharacterCard";
 import { SceneRow } from "@/components/SceneRow";
 import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ErrorDetails } from "@/components/ErrorDetails";
 
 export default function EditProjectPage() {
   const params = useParams<{ id: string }>();
@@ -95,8 +96,9 @@ export default function EditProjectPage() {
       </div>
 
       {project.status === "FAILED" && project.error_message && (
-        <div className="rounded-card border border-cut/40 bg-cut/10 px-4 py-3 text-sm text-cut">
-          Last run failed: {project.error_message}
+        <div className="rounded-card border border-cut/40 bg-cut/10 px-4 py-3 text-cut">
+          <p className="text-sm font-medium">Last run failed</p>
+          <ErrorDetails message={project.error_message} className="mt-1" />
         </div>
       )}
 
