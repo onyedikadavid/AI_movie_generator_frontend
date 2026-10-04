@@ -1,23 +1,27 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, Pencil, RotateCcw, Square } from "lucide-react";
+import { AlertTriangle, Loader2, Pencil, RotateCcw } from "lucide-react";
 import { useProjectPolling } from "@/hooks/useProjectPolling";
 import { mediaUrl, api, ApiError } from "@/lib/api";
+import { describeRun } from "@/lib/runState";
 import { ProgressTracker } from "@/components/ProgressTracker";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/Button";
+import { RunControls } from "@/components/RunControls";
 import { ErrorDetails } from "@/components/ErrorDetails";
-import { useState } from "react";
 
 export default function PlayerPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { project, loading, error } = useProjectPolling(params.id, 4000);
-  const [retrying, setRetrying] = useState(false);
-  const [retryError, setRetryError] = useState<string | null>(null);
-  const [cancelling, setCancelling] = useState(false);
-  const [cancelError, setCancelError] = useState<string | null>(null);
+  const { project, loading, error, gone, refresh } = useProjectPolling(params.id, 3000);
+  const [restarting, setRestarting] = useState(false);
+  const [restartError, setRestartError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (gone) router.replace("/");
+  }, [gone, router]);
 
   if (loading) {
     return (
@@ -25,6 +29,10 @@ export default function PlayerPage() {
         <Loader2 className="h-4 w-4 animate-spin" /> Loading project…
       </div>
     );
+  }
+
+  if (gone) {
+    return <div className="py-24 text-center text-sm text-paper-muted">This project was deleted. Taking you back…</div>;
   }
 
   if (error || !project) {
@@ -35,31 +43,23 @@ export default function PlayerPage() {
     );
   }
 
+  const view = describeRun(project);
   const videoUrl = mediaUrl(project.final_video_path);
-  const isTerminal =
-    project.status === "COMPLETED" || project.status === "FAILED" || project.status === "CANCELLED";
+  const showProgress = view.busy || project.status === "PAUSED";
+  const hasScenes = project.scenes.length > 0;
+  const doneScenes = project.scenes.filter((s) => s.render_status === "DONE").length;
 
-  async function retry() {
-    setRetrying(true);
-    setRetryError(null);
+  async function startOver() {
+    if (!window.confirm("Redo every scene from scratch? Everything already rendered will be replaced.")) return;
+    setRestarting(true);
+    setRestartError(null);
     try {
-      await api.runPipeline(project!.id);
+      await api.runPipeline(project!.id, true);
+      await refresh();
     } catch (e) {
-      setRetryError(e instanceof ApiError ? e.message : "Couldn't restart generation.");
+      setRestartError(e instanceof ApiError ? e.message : "Couldn't restart generation.");
     } finally {
-      setRetrying(false);
-    }
-  }
-
-  async function cancel() {
-    setCancelling(true);
-    setCancelError(null);
-    try {
-      await api.cancelProject(project!.id);
-    } catch (e) {
-      setCancelError(e instanceof ApiError ? e.message : "Couldn't cancel generation.");
-    } finally {
-      setCancelling(false);
+      setRestarting(false);
     }
   }
 
@@ -69,7 +69,7 @@ export default function PlayerPage() {
         <div>
           <h1 className="font-display text-3xl text-paper">{project.title || "Untitled project"}</h1>
           <div className="mt-2">
-            <StatusBadge status={project.status} />
+            <StatusBadge project={project} />
           </div>
         </div>
         <button
@@ -80,41 +80,68 @@ export default function PlayerPage() {
         </button>
       </div>
 
-      {!isTerminal && (
+      {view.stopping && (
+        <div className="rounded-card border border-cut/40 bg-cut/10 px-4 py-3 text-sm text-cut">
+          {project.delete_requested
+            ? "Deleting - stopping the current step first. This page will close when it's gone."
+            : project.cancel_requested
+            ? "Cancelling - finishing the current step. This usually takes a few seconds."
+            : "Pausing - finishing the current step so nothing is lost. This usually takes a few seconds."}
+        </div>
+      )}
+
+      {showProgress && (
         <div className="rounded-card border border-ink-border bg-ink-surface p-6">
-          <ProgressTracker status={project.status} />
-          <div className="mt-5 flex items-center gap-3 border-t border-ink-border pt-4">
-            <Button variant="ghost" onClick={cancel} loading={cancelling}>
-              <Square className="h-3.5 w-3.5" /> Stop
-            </Button>
-            {cancelError && <p className="text-xs text-cut">{cancelError}</p>}
+          {hasScenes ? (
+            <ProgressTracker project={project} />
+          ) : (
+            <p className="flex items-center gap-2 text-sm text-paper-muted">
+              {view.running && <Loader2 className="h-4 w-4 animate-spin text-reel" />}
+              {view.waiting ? "Waiting for its turn…" : project.status === "PAUSED" ? "Script writing is paused." : project.stage_detail || "Writing the script…"}
+            </p>
+          )}
+          <div className="mt-5 border-t border-ink-border pt-4">
+            <RunControls project={project} onChanged={refresh} onDeleted={() => router.replace("/")} />
           </div>
+        </div>
+      )}
+
+      {project.warning_message && (
+        <div className="flex items-start gap-2 rounded-card border border-tally/40 bg-tally/10 px-4 py-3 text-sm text-tally">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{project.warning_message}</span>
         </div>
       )}
 
       {project.status === "CANCELLED" && (
         <div className="rounded-card border border-ink-border bg-ink-surface p-5">
           <p className="text-sm text-paper-muted">
-            Generation was stopped{project.error_message ? ` (${project.error_message})` : "."}
+            Generation was stopped. {hasScenes ? `${doneScenes} of ${project.scenes.length} scenes are finished and saved.` : ""}
           </p>
-          {retryError && <p className="mt-1 text-xs text-cut">{retryError}</p>}
-          <div className="mt-3">
-            <Button variant="secondary" onClick={retry} loading={retrying}>
-              <RotateCcw className="h-3.5 w-3.5" /> Start generation again
-            </Button>
+          {restartError && <p className="mt-1 text-xs text-cut">{restartError}</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <RunControls project={project} onChanged={refresh} onDeleted={() => router.replace("/")} />
+            {hasScenes && (
+              <Button variant="secondary" onClick={startOver} loading={restarting}>
+                <RotateCcw className="h-3.5 w-3.5" /> Start over
+              </Button>
+            )}
           </div>
         </div>
       )}
 
       {project.status === "FAILED" && (
         <div className="rounded-card border border-cut/40 bg-cut/10 p-5 text-cut">
-          <p className="text-sm font-medium">Generation failed</p>
+          <p className="text-sm font-medium">Generation stopped with an error{hasScenes ? ` - ${doneScenes} of ${project.scenes.length} scenes are saved` : ""}</p>
           <ErrorDetails message={project.error_message || "Unknown error."} className="mt-1" />
-          {retryError && <p className="mt-2 text-xs">{retryError}</p>}
-          <div className="mt-3">
-            <Button variant="danger" onClick={retry} loading={retrying}>
-              <RotateCcw className="h-3.5 w-3.5" /> Retry generation
-            </Button>
+          {restartError && <p className="mt-2 text-xs">{restartError}</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <RunControls project={project} onChanged={refresh} onDeleted={() => router.replace("/")} />
+            {hasScenes && (
+              <Button variant="secondary" onClick={startOver} loading={restarting}>
+                <RotateCcw className="h-3.5 w-3.5" /> Start over
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -126,7 +153,13 @@ export default function PlayerPage() {
         </div>
       ) : (
         <div className="flex aspect-video items-center justify-center rounded-card border border-ink-border bg-ink-surface text-sm text-paper-faint">
-          {project.status === "COMPLETED" ? "Video file not found on disk." : "Final cut will appear here once compositing finishes."}
+          {project.status === "COMPLETED" ? "Video file not found on disk." : "Final cut will appear here once it's finished."}
+        </div>
+      )}
+
+      {project.status === "COMPLETED" && (
+        <div className="-mt-4 flex justify-end">
+          <RunControls project={project} onChanged={refresh} onDeleted={() => router.replace("/")} />
         </div>
       )}
 
@@ -141,8 +174,10 @@ export default function PlayerPage() {
                   {img ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={img} alt={`Scene ${scene.scene_number} keyframe`} className="h-full w-full object-cover" />
-                  ) : (
+                  ) : scene.render_status === "RENDERING" && view.running ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <span className="text-[11px]">not drawn yet</span>
                   )}
                 </div>
                 <div className="flex items-center justify-between px-2.5 py-1.5">

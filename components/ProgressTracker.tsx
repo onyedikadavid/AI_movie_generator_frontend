@@ -1,50 +1,85 @@
-import { Check, Loader2 } from "lucide-react";
-import type { ProjectStatus } from "@/lib/types";
-import { PIPELINE_STAGES } from "@/lib/types";
+import { AlertCircle, Check, Clock, Loader2, Pause } from "lucide-react";
+import { describeRun } from "@/lib/runState";
+import type { ProjectDetail } from "@/lib/types";
 
-const ORDER: ProjectStatus[] = [
-  "GENERATING_ASSETS",
-  "GENERATING_IMAGES",
-  "GENERATING_AUDIO",
-  "GENERATING_VIDEOS",
-  "COMPOSITING",
-  "COMPLETED",
-];
+/**
+ * Scene-by-scene progress: one chip per scene (done / rendering now / waiting /
+ * failed) plus the final cut, an overall bar, and what the worker is doing this second.
+ */
+export function ProgressTracker({ project }: { project: ProjectDetail }) {
+  const view = describeRun(project);
+  const scenes = project.scenes;
+  const done = scenes.filter((s) => s.render_status === "DONE").length;
+  const compositing = project.status === "COMPOSITING";
+  const finished = project.status === "COMPLETED";
+  const paused = project.status === "PAUSED";
 
-export function ProgressTracker({ status }: { status: ProjectStatus }) {
-  const currentIdx = status === "FAILED" ? -1 : ORDER.indexOf(status);
+  const place = project.queue_position
+    ? project.queue_position === 1
+      ? "next up"
+      : `#${project.queue_position} in line`
+    : "waiting";
+  const headline = view.waiting
+    ? `Waiting for its turn (${place}) - only one project renders at a time`
+    : paused
+    ? `Paused - ${done} of ${scenes.length} scenes finished and saved`
+    : project.stage_detail || "Working…";
 
   return (
-    <div className="flex items-center gap-0">
-      {PIPELINE_STAGES.map((stage, i) => {
-        const stageIdx = ORDER.indexOf(stage.key);
-        const isDone = currentIdx > stageIdx || status === "COMPLETED";
-        const isCurrent = currentIdx === stageIdx && status !== "COMPLETED";
-
-        return (
-          <div key={stage.key} className="flex flex-1 items-center last:flex-none">
-            <div className="flex flex-col items-center gap-1.5">
-              <div
-                className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs ${
-                  isDone
-                    ? "border-wrap bg-wrap/20 text-wrap"
-                    : isCurrent
-                    ? "border-reel bg-reel/20 text-reel"
-                    : "border-ink-border bg-ink-surface text-paper-faint"
-                }`}
-              >
-                {isDone ? <Check className="h-3.5 w-3.5" /> : isCurrent ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : i + 1}
-              </div>
-              <span className={`text-[11px] ${isCurrent ? "text-reel" : isDone ? "text-wrap" : "text-paper-faint"}`}>
-                {stage.label}
-              </span>
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
+        {scenes.map((s) => {
+          const isDone = s.render_status === "DONE" || finished;
+          const isRendering = s.render_status === "RENDERING" && view.running;
+          const isFailed = s.render_status === "FAILED";
+          return (
+            <div
+              key={s.id}
+              title={`Scene ${s.scene_number}${s.location ? ` - ${s.location}` : ""}`}
+              className={`flex h-8 min-w-[2.25rem] items-center justify-center gap-1 rounded-md border px-2 font-mono text-xs ${
+                isDone
+                  ? "border-wrap/50 bg-wrap/15 text-wrap"
+                  : isFailed
+                  ? "border-cut/50 bg-cut/10 text-cut"
+                  : isRendering
+                  ? "border-reel bg-reel/15 text-reel"
+                  : "border-ink-border bg-ink text-paper-faint"
+              }`}
+            >
+              {isDone ? <Check className="h-3 w-3" /> : isRendering ? <Loader2 className="h-3 w-3 animate-spin" /> : isFailed ? <AlertCircle className="h-3 w-3" /> : null}
+              {String(s.scene_number).padStart(2, "0")}
             </div>
-            {i < PIPELINE_STAGES.length - 1 && (
-              <div className={`mx-1 h-px flex-1 ${isDone ? "bg-wrap/50" : "bg-ink-border"}`} />
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+        <div
+          className={`flex h-8 items-center gap-1 rounded-md border px-2 text-xs ${
+            finished
+              ? "border-wrap/50 bg-wrap/15 text-wrap"
+              : compositing
+              ? "border-reel bg-reel/15 text-reel"
+              : "border-ink-border bg-ink text-paper-faint"
+          }`}
+        >
+          {finished ? <Check className="h-3 w-3" /> : compositing ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+          Final cut
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+          <span className="flex items-center gap-1.5 text-paper-muted">
+            {view.waiting ? <Clock className="h-3.5 w-3.5" /> : paused ? <Pause className="h-3.5 w-3.5 text-tally" /> : view.running ? <Loader2 className="h-3.5 w-3.5 animate-spin text-reel" /> : null}
+            {headline}
+          </span>
+          <span className="font-mono text-paper-faint">{project.progress_pct}%</span>
+        </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-ink-raised">
+          <div
+            className={`h-full rounded-full transition-all duration-700 ${paused ? "bg-tally" : view.waiting ? "bg-paper-faint" : "bg-reel"}`}
+            style={{ width: `${Math.min(100, Math.max(project.progress_pct, view.waiting ? 0 : 2))}%` }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,17 +2,19 @@
 
 import { useState } from "react";
 import { ChevronDown, MapPin, MessageSquare, Timer } from "lucide-react";
-import type { SceneResponse } from "@/lib/types";
-import { api } from "@/lib/api";
+import type { DialogueTurn, SceneResponse } from "@/lib/types";
+import { api, ApiError } from "@/lib/api";
 
 export function SceneRow({
   projectId,
   scene,
   locked,
+  onSaved,
 }: {
   projectId: string;
   scene: SceneResponse;
   locked: boolean;
+  onSaved?: () => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -20,7 +22,9 @@ export function SceneRow({
   const [motion, setMotion] = useState(scene.motion_prompt || "");
   const [narration, setNarration] = useState(scene.narration_text || "");
   const [imagePrompt, setImagePrompt] = useState(scene.image_prompt);
+  const [turns, setTurns] = useState<DialogueTurn[]>(scene.dialogue_turns || []);
   const [dirty, setDirty] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function markDirty<T>(setter: (v: T) => void) {
     return (v: T) => {
@@ -31,17 +35,27 @@ export function SceneRow({
 
   async function save() {
     setSaving(true);
+    setError(null);
     try {
       await api.updateScene(projectId, scene.id, {
         visual_description: visual,
         motion_prompt: motion,
         narration_text: narration,
         image_prompt: imagePrompt,
+        dialogue_turns: turns,
       });
       setDirty(false);
+      await onSaved?.();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Couldn't save.");
     } finally {
       setSaving(false);
     }
+  }
+
+  function editTurn(i: number, text: string) {
+    setTurns((prev) => prev.map((t, idx) => (idx === i ? { ...t, text } : t)));
+    setDirty(true);
   }
 
   return (
@@ -65,9 +79,9 @@ export function SceneRow({
           <span className="hidden items-center gap-1 font-mono text-xs sm:inline-flex">
             <Timer className="h-3 w-3" /> {scene.duration_seconds}s
           </span>
-          {scene.dialogue_turns && scene.dialogue_turns.length > 0 && (
+          {turns.length > 0 && (
             <span className="hidden items-center gap-1 text-xs sm:inline-flex">
-              <MessageSquare className="h-3 w-3" /> {scene.dialogue_turns.length}
+              <MessageSquare className="h-3 w-3" /> {turns.length}
             </span>
           )}
           <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -83,19 +97,29 @@ export function SceneRow({
             <Field label="Narration" value={narration} onChange={markDirty(setNarration)} disabled={locked} />
           </div>
 
-          {scene.dialogue_turns && scene.dialogue_turns.length > 0 && (
+          {turns.length > 0 && (
             <div className="mt-4 space-y-2">
-              <p className="text-xs font-medium text-paper-muted">Dialogue</p>
-              {scene.dialogue_turns.map((turn, i) => (
+              <p className="text-xs font-medium text-paper-muted">Dialogue - each character speaks in their own voice</p>
+              {turns.map((turn, i) => (
                 <div key={i} className="rounded-md bg-ink px-3 py-2 text-sm">
-                  <span className="font-medium text-tally">{turn.speaker}: </span>
-                  <span className="text-paper-muted">{turn.text}</span>
-                  {turn.action && <span className="ml-2 text-xs text-paper-faint italic">({turn.action})</span>}
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="font-medium text-tally">{turn.speaker}</span>
+                    {turn.expression && <span className="text-paper-faint">· {turn.expression}</span>}
+                    {turn.action && <span className="italic text-paper-faint">({turn.action})</span>}
+                  </div>
+                  <textarea
+                    value={turn.text}
+                    onChange={(e) => editTurn(i, e.target.value)}
+                    rows={2}
+                    disabled={locked}
+                    className="mt-1 w-full resize-none rounded-md border border-ink-border bg-ink-surface px-2 py-1.5 text-sm text-paper focus:border-tally focus:outline-none disabled:opacity-60"
+                  />
                 </div>
               ))}
             </div>
           )}
 
+          {error && <p className="mt-3 text-xs text-cut">{error}</p>}
           {!locked && (
             <div className="mt-4 flex justify-end">
               <button

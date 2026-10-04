@@ -1,31 +1,25 @@
-import { ProjectStatus, STATUS_LABELS, IN_FLIGHT_STATUSES } from "@/lib/types";
+import { describeRun, TONE_CLASSES } from "@/lib/runState";
+import type { RunState } from "@/lib/types";
 
-function toneFor(status: ProjectStatus): { dot: string; text: string } {
-  if (status === "COMPLETED") return { dot: "bg-wrap", text: "text-wrap" };
-  if (status === "FAILED") return { dot: "bg-cut", text: "text-cut" };
-  if (status === "CANCELLED") return { dot: "bg-paper-faint", text: "text-paper-muted" };
-  if (status === "SCRIPT_READY" || status === "CREATED") return { dot: "bg-tally", text: "text-tally" };
-  if (IN_FLIGHT_STATUSES.includes(status)) return { dot: "bg-reel", text: "text-reel" };
-  return { dot: "bg-paper-faint", text: "text-paper-muted" };
-}
+type Like = Pick<
+  RunState,
+  "status" | "pause_requested" | "cancel_requested" | "delete_requested" | "resume_count" | "queue_position" | "current_scene" | "total_scenes"
+>;
 
-export function StatusBadge({ status }: { status: ProjectStatus }) {
-  const tone = toneFor(status);
-  const pulsing = IN_FLIGHT_STATUSES.includes(status);
+/** Honest, live status for a project: Queued #n / Generating / Pausing… / Paused / Resuming / Cancelled / Deleting… */
+export function StatusBadge({ project }: { project: Like }) {
+  const view = describeRun(project);
+  const tone = TONE_CLASSES[view.tone];
 
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${tone.text}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${tone.dot} ${pulsing ? "animate-pulse-dot" : ""}`} />
-      {STATUS_LABELS[status]}
+      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot} ${view.pulsing ? "animate-pulse-dot" : ""}`} />
+      {view.label}
     </span>
   );
 }
 
 /** Left color bar used on project cards - encodes status without another pill. */
-export function statusBarColor(status: ProjectStatus): string {
-  if (status === "COMPLETED") return "bg-wrap";
-  if (status === "FAILED") return "bg-cut";
-  if (status === "SCRIPT_READY" || status === "CREATED") return "bg-tally";
-  if (IN_FLIGHT_STATUSES.includes(status)) return "bg-reel";
-  return "bg-ink-border";
+export function statusBarColor(project: Like): string {
+  return TONE_CLASSES[describeRun(project).tone].bar;
 }

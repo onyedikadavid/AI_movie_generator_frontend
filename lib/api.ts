@@ -1,5 +1,7 @@
 import type {
   CharacterResponse,
+  DeleteResult,
+  QueueSnapshot,
   CharacterUpdatePayload,
   HealthResponse,
   ProjectDetail,
@@ -70,16 +72,32 @@ export const api = {
     return fetch(`${API_V1}/projects`, { method: "POST", body: form }).then(handle<ProjectResponse>);
   },
 
-  deleteProject(id: string): Promise<void> {
-    return fetch(`${API_V1}/projects/${id}`, { method: "DELETE" }).then(handle<void>);
+  /** Idle project: deleted at once. Running project: stopped first, then removed (deleting = true). */
+  deleteProject(id: string): Promise<DeleteResult> {
+    return fetch(`${API_V1}/projects/${id}`, { method: "DELETE" }).then(handle<DeleteResult>);
   },
 
-  runPipeline(id: string): Promise<ProjectResponse> {
-    return fetch(`${API_V1}/projects/${id}/run-pipeline`, { method: "POST" }).then(handle<ProjectResponse>);
+  /** `fresh` = redo every scene from scratch; otherwise only what's missing or edited is rendered. */
+  runPipeline(id: string, fresh = false): Promise<ProjectResponse> {
+    return fetch(`${API_V1}/projects/${id}/run-pipeline?fresh=${fresh ? "true" : "false"}`, { method: "POST" }).then(
+      handle<ProjectResponse>
+    );
+  },
+
+  resumeProject(id: string): Promise<ProjectResponse> {
+    return fetch(`${API_V1}/projects/${id}/resume`, { method: "POST" }).then(handle<ProjectResponse>);
+  },
+
+  pauseProject(id: string): Promise<ProjectResponse> {
+    return fetch(`${API_V1}/projects/${id}/pause`, { method: "POST" }).then(handle<ProjectResponse>);
   },
 
   cancelProject(id: string): Promise<ProjectResponse> {
     return fetch(`${API_V1}/projects/${id}/cancel`, { method: "POST" }).then(handle<ProjectResponse>);
+  },
+
+  queue(): Promise<QueueSnapshot> {
+    return fetch(`${API_V1}/queue`, { cache: "no-store" }).then(handle<QueueSnapshot>);
   },
 
   updateScene(projectId: string, sceneId: string, payload: SceneUpdatePayload): Promise<SceneResponse> {
