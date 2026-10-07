@@ -32,6 +32,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-body min-h-screen bg-ink text-paper">
         <Navbar />
         <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
+        <footer className="mx-auto max-w-6xl px-6 pb-8 text-center text-xs text-paper-faint">
+          Video generation powered by{" "}
+          <a href="https://github.com/deepbeepmeep/Wan2GP" target="_blank" rel="noreferrer" className="underline hover:text-tally">
+            WanGP
+          </a>{" "}
+          (LTX-Video models).
+        </footer>
       </body>
     </html>
   );

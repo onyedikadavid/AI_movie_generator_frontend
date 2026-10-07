@@ -134,6 +134,7 @@ export interface SceneResponse {
   narration_text: string | null;
   image_prompt: string;
   motion_prompt: string | null;
+  sound_design: string | null;
   image_path: string | null;
   video_path: string | null;
   audio_path: string | null;
@@ -155,6 +156,7 @@ export interface SceneUpdatePayload {
   narration_text?: string;
   image_prompt?: string;
   motion_prompt?: string;
+  sound_design?: string;
   dialogue_turns?: DialogueTurn[];
 }
 

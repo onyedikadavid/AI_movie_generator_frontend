@@ -20,6 +20,7 @@ export function SceneRow({
   const [saving, setSaving] = useState(false);
   const [visual, setVisual] = useState(scene.visual_description);
   const [motion, setMotion] = useState(scene.motion_prompt || "");
+  const [sound, setSound] = useState(scene.sound_design || "");
   const [narration, setNarration] = useState(scene.narration_text || "");
   const [imagePrompt, setImagePrompt] = useState(scene.image_prompt);
   const [turns, setTurns] = useState<DialogueTurn[]>(scene.dialogue_turns || []);
@@ -40,6 +41,7 @@ export function SceneRow({
       await api.updateScene(projectId, scene.id, {
         visual_description: visual,
         motion_prompt: motion,
+        sound_design: sound,
         narration_text: narration,
         image_prompt: imagePrompt,
         dialogue_turns: turns,
@@ -93,6 +95,7 @@ export function SceneRow({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Visual description" value={visual} onChange={markDirty(setVisual)} disabled={locked} />
             <Field label="Motion / camera direction" value={motion} onChange={markDirty(setMotion)} disabled={locked} />
+            <Field label="Background sound & effects (no speech)" value={sound} onChange={markDirty(setSound)} disabled={locked} />
             <Field label="Image prompt" value={imagePrompt} onChange={markDirty(setImagePrompt)} disabled={locked} />
             <Field label="Narration" value={narration} onChange={markDirty(setNarration)} disabled={locked} />
           </div>
