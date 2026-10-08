@@ -211,7 +211,7 @@ export default function EditProjectPage() {
         </p>
         <div className="mt-4 flex flex-col gap-2">
           {project.scenes.map((s) => (
-            <SceneRow key={s.id} projectId={project.id} scene={s} locked={locked} onSaved={refresh} />
+            <SceneRow key={s.id} projectId={project.id} scene={s} locked={locked} onSaved={refresh} characters={project.characters} />
           ))}
         </div>
       </section>

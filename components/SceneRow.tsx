@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown, MapPin, MessageSquare, Timer } from "lucide-react";
-import type { DialogueTurn, SceneResponse } from "@/lib/types";
+import type { CharacterResponse, DialogueTurn, SceneResponse } from "@/lib/types";
 import { api, ApiError } from "@/lib/api";
 
 export function SceneRow({
@@ -10,11 +10,13 @@ export function SceneRow({
   scene,
   locked,
   onSaved,
+  characters = [],
 }: {
   projectId: string;
   scene: SceneResponse;
   locked: boolean;
   onSaved?: () => void | Promise<void>;
+  characters?: CharacterResponse[];
 }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -25,6 +27,8 @@ export function SceneRow({
   const [imagePrompt, setImagePrompt] = useState(scene.image_prompt);
   const [turns, setTurns] = useState<DialogueTurn[]>(scene.dialogue_turns || []);
   const [dirty, setDirty] = useState(false);
+  const [newSpeaker, setNewSpeaker] = useState("");
+  const [newText, setNewText] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   function markDirty<T>(setter: (v: T) => void) {
@@ -53,6 +57,14 @@ export function SceneRow({
     } finally {
       setSaving(false);
     }
+  }
+
+  function addLine() {
+    const speaker = newSpeaker || characters[0]?.name || "";
+    if (!speaker || !newText.trim()) return;
+    setTurns((prev) => [...prev, { speaker, text: newText.trim(), expression: "neutral", action: "" }]);
+    setNewText("");
+    setDirty(true);
   }
 
   function editTurn(i: number, text: string) {
@@ -97,7 +109,7 @@ export function SceneRow({
             <Field label="Motion / camera direction" value={motion} onChange={markDirty(setMotion)} disabled={locked} />
             <Field label="Background sound & effects (no speech)" value={sound} onChange={markDirty(setSound)} disabled={locked} />
             <Field label="Image prompt" value={imagePrompt} onChange={markDirty(setImagePrompt)} disabled={locked} />
-            <Field label="Narration" value={narration} onChange={markDirty(setNarration)} disabled={locked} />
+            <Field label="Narration (only spoken if the narrator voice is turned on)" value={narration} onChange={markDirty(setNarration)} disabled={locked} />
           </div>
 
           {turns.length > 0 && (
@@ -119,6 +131,43 @@ export function SceneRow({
                   />
                 </div>
               ))}
+            </div>
+          )}
+
+          {!locked && characters.length > 0 && (
+            <div className="mt-4 rounded-md border border-dashed border-ink-border p-3">
+              <p className="text-xs font-medium text-paper-muted">
+                Add a spoken line {turns.length === 0 && "- this scene has no dialogue, so nobody speaks in it yet"}
+              </p>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <select
+                  value={newSpeaker || characters[0].name}
+                  onChange={(e) => setNewSpeaker(e.target.value)}
+                  className="rounded-md border border-ink-border bg-ink px-2 py-1.5 text-sm text-paper focus:border-tally focus:outline-none sm:w-44"
+                >
+                  {characters.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  value={newText}
+                  onChange={(e) => setNewText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addLine();
+                  }}
+                  placeholder="What they say out loud…"
+                  className="flex-1 rounded-md border border-ink-border bg-ink px-2.5 py-1.5 text-sm text-paper focus:border-tally focus:outline-none"
+                />
+                <button
+                  onClick={addLine}
+                  disabled={!newText.trim()}
+                  className="rounded-md bg-ink-raised px-3 py-1.5 text-xs font-semibold text-paper hover:bg-ink-border disabled:opacity-40"
+                >
+                  Add line
+                </button>
+              </div>
             </div>
           )}
 

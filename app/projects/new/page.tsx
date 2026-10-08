@@ -6,9 +6,11 @@ import { Mic, Square, Upload, X } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
 
-const GENRES = ["", "Sci-fi", "Drama", "Comedy", "Thriller", "Fantasy", "Nollywood", "Documentary"];
-const TONES = ["", "Lighthearted", "Tense", "Hopeful", "Melancholic", "Comedic", "Epic"];
-const STYLES = ["", "Photorealistic", "Anime", "Watercolor", "Claymation", "Noir", "Studio Ghibli-inspired"];
+const KIDS_GENRE = "Kids / Family";
+const KIDS_STYLE = "Kids cartoon (child-friendly)";
+const GENRES = ["", KIDS_GENRE, "Sci-fi", "Drama", "Comedy", "Thriller", "Fantasy", "Nollywood", "Documentary"];
+const TONES = ["", "Gentle & playful", "Lighthearted", "Tense", "Hopeful", "Melancholic", "Comedic", "Epic"];
+const STYLES = ["", "Cinematic", KIDS_STYLE, "Photorealistic", "Anime", "Watercolor", "Claymation", "Noir", "Studio Ghibli-inspired"];
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -127,9 +129,28 @@ export default function NewProjectPage() {
           <legend className="mb-1 text-sm font-medium text-paper sm:col-span-3">
             Optional stylistic direction
           </legend>
-          <Select label="Genre" value={genre} onChange={setGenre} options={GENRES} />
+          <Select
+            label="Genre"
+            value={genre}
+            onChange={(g) => {
+              setGenre(g);
+              // Choosing the kids genre also picks the kids look (unless a style was already chosen).
+              if (g === KIDS_GENRE && !visualStyle) setVisualStyle(KIDS_STYLE);
+            }}
+            options={GENRES}
+          />
           <Select label="Tone" value={tone} onChange={setTone} options={TONES} />
           <Select label="Visual style" value={visualStyle} onChange={setVisualStyle} options={STYLES} />
+          {(genre === KIDS_GENRE || visualStyle === KIDS_STYLE) && (
+            <p className="text-xs text-paper-muted sm:col-span-3">
+              Kids mode: the story is written for ages 3-8 (simple words, gentle, no scary or violent content) with a bright cartoon look.
+            </p>
+          )}
+          {visualStyle === "Cinematic" && (
+            <p className="text-xs text-paper-muted sm:col-span-3">
+              Cinematic mode: film-style framing, dramatic lighting, shallow depth of field and a graded colour look.
+            </p>
+          )}
         </fieldset>
 
         {error && (
