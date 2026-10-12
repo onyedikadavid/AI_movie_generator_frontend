@@ -9,6 +9,7 @@ import type {
   ProjectResponse,
   SceneResponse,
   SceneUpdatePayload,
+  VideoMode,
 } from "./types";
 
 // Strip any trailing slash(es) - if NEXT_PUBLIC_API_URL is set to
@@ -61,6 +62,7 @@ export const api = {
     genre?: string;
     tone?: string;
     visualStyle?: string;
+    videoMode?: VideoMode;
   }): Promise<ProjectResponse> {
     const form = new FormData();
     if (input.prompt) form.append("prompt", input.prompt);
@@ -68,8 +70,18 @@ export const api = {
     if (input.genre) form.append("genre", input.genre);
     if (input.tone) form.append("tone", input.tone);
     if (input.visualStyle) form.append("visual_style", input.visualStyle);
+    if (input.videoMode) form.append("video_mode", input.videoMode);
 
     return fetch(`${API_V1}/projects`, { method: "POST", body: form }).then(handle<ProjectResponse>);
+  },
+
+  /** Change how the project is generated (image first vs text-to-video). Takes effect on the next run. */
+  updateProjectSettings(id: string, payload: { video_mode: VideoMode }): Promise<ProjectResponse> {
+    return fetch(`${API_V1}/projects/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then(handle<ProjectResponse>);
   },
 
   /** Idle project: deleted at once. Running project: stopped first, then removed (deleting = true). */

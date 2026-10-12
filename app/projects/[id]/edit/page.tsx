@@ -13,6 +13,8 @@ import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { RunControls } from "@/components/RunControls";
 import { ErrorDetails } from "@/components/ErrorDetails";
+import { VideoModePicker } from "@/components/VideoModePicker";
+import type { VideoMode } from "@/lib/types";
 
 export default function EditProjectPage() {
   const params = useParams<{ id: string }>();
@@ -20,6 +22,7 @@ export default function EditProjectPage() {
   const { project, loading, error, gone, refresh } = useProjectPolling(params.id, 3000);
   const [busyAction, setBusyAction] = useState<"start" | "fresh" | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
+  const [savingMode, setSavingMode] = useState(false);
 
   useEffect(() => {
     if (gone) router.replace("/");
@@ -60,6 +63,19 @@ export default function EditProjectPage() {
     } catch (e) {
       setStartError(e instanceof ApiError ? e.message : "Couldn't start generation.");
       setBusyAction(null);
+    }
+  }
+
+  async function changeMode(mode: VideoMode) {
+    setSavingMode(true);
+    setStartError(null);
+    try {
+      await api.updateProjectSettings(project!.id, { video_mode: mode });
+      await refresh();
+    } catch (e) {
+      setStartError(e instanceof ApiError ? e.message : "Couldn't change the generation mode.");
+    } finally {
+      setSavingMode(false);
     }
   }
 
@@ -190,6 +206,15 @@ export default function EditProjectPage() {
       {startError && (
         <div className="rounded-card border border-cut/40 bg-cut/10 px-4 py-3 text-sm text-cut">{startError}</div>
       )}
+
+      <section>
+        <h2 className="font-display text-lg text-paper">How scenes are generated</h2>
+        <p className="mb-3 text-sm text-paper-muted">
+          Choose whether the image model draws each scene first, or the video model works from the text alone.
+          {project.status === "COMPLETED" ? " Switching re-renders the scenes the next time you regenerate." : ""}
+        </p>
+        <VideoModePicker value={project.video_mode ?? "i2v"} onChange={changeMode} disabled={locked} busy={savingMode} />
+      </section>
 
       <section>
         <h2 className="font-display text-lg text-paper">Cast</h2>

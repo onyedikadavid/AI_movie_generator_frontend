@@ -67,8 +67,8 @@ export function SceneRow({
     setDirty(true);
   }
 
-  function editTurn(i: number, text: string) {
-    setTurns((prev) => prev.map((t, idx) => (idx === i ? { ...t, text } : t)));
+  function editTurn(i: number, patch: Partial<DialogueTurn>) {
+    setTurns((prev) => prev.map((t, idx) => (idx === i ? { ...t, ...patch } : t)));
     setDirty(true);
   }
 
@@ -115,20 +115,37 @@ export function SceneRow({
           {turns.length > 0 && (
             <div className="mt-4 space-y-2">
               <p className="text-xs font-medium text-paper-muted">Dialogue - each character speaks in their own voice</p>
+              <p className="text-[11px] text-paper-faint">
+                Put <span className="text-paper-muted">only the spoken words</span> in the line. What the character does
+                (tapping, turning away…) goes in <span className="text-paper-muted">Action</span> - it is acted out, never read aloud.
+                If you type an action in front of the words, it is moved to Action when you save.
+              </p>
               {turns.map((turn, i) => (
                 <div key={i} className="rounded-md bg-ink px-3 py-2 text-sm">
                   <div className="flex items-center gap-2 text-xs">
                     <span className="font-medium text-tally">{turn.speaker}</span>
                     {turn.expression && <span className="text-paper-faint">· {turn.expression}</span>}
-                    {turn.action && <span className="italic text-paper-faint">({turn.action})</span>}
                   </div>
-                  <textarea
-                    value={turn.text}
-                    onChange={(e) => editTurn(i, e.target.value)}
-                    rows={2}
-                    disabled={locked}
-                    className="mt-1 w-full resize-none rounded-md border border-ink-border bg-ink-surface px-2 py-1.5 text-sm text-paper focus:border-tally focus:outline-none disabled:opacity-60"
-                  />
+                  <label className="mt-1 block text-[11px] text-paper-faint">
+                    Action (what they do)
+                    <input
+                      value={turn.action ?? ""}
+                      onChange={(e) => editTurn(i, { action: e.target.value })}
+                      disabled={locked}
+                      placeholder="e.g. taps the mixing board, irritated"
+                      className="mt-0.5 w-full rounded-md border border-ink-border bg-ink-surface px-2 py-1 text-sm italic text-paper focus:border-tally focus:outline-none disabled:opacity-60"
+                    />
+                  </label>
+                  <label className="mt-1 block text-[11px] text-paper-faint">
+                    Says out loud
+                    <textarea
+                      value={turn.text}
+                      onChange={(e) => editTurn(i, { text: e.target.value })}
+                      rows={2}
+                      disabled={locked}
+                      className="mt-0.5 w-full resize-none rounded-md border border-ink-border bg-ink-surface px-2 py-1.5 text-sm text-paper focus:border-tally focus:outline-none disabled:opacity-60"
+                    />
+                  </label>
                 </div>
               ))}
             </div>

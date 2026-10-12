@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Mic, Square, Upload, X } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
+import { VideoModePicker } from "@/components/VideoModePicker";
+import type { VideoMode } from "@/lib/types";
 
 const KIDS_GENRE = "Kids / Family";
 const KIDS_STYLE = "Kids cartoon (child-friendly)";
@@ -18,6 +20,7 @@ export default function NewProjectPage() {
   const [genre, setGenre] = useState("");
   const [tone, setTone] = useState("");
   const [visualStyle, setVisualStyle] = useState("");
+  const [videoMode, setVideoMode] = useState<VideoMode>("i2v");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [recording, setRecording] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -66,6 +69,7 @@ export default function NewProjectPage() {
         genre: genre || undefined,
         tone: tone || undefined,
         visualStyle: visualStyle || undefined,
+        videoMode,
       });
       router.push(`/projects/${project.id}/edit`);
     } catch (e) {
@@ -152,6 +156,12 @@ export default function NewProjectPage() {
             </p>
           )}
         </fieldset>
+
+        <div>
+          <p className="mb-2 text-sm font-medium text-paper">How should scenes be generated?</p>
+          <VideoModePicker value={videoMode} onChange={setVideoMode} />
+          <p className="mt-2 text-xs text-paper-faint">You can change this later on the review screen, before you start generating.</p>
+        </div>
 
         {error && (
           <div className="rounded-card border border-cut/40 bg-cut/10 px-4 py-3 text-sm text-cut">{error}</div>

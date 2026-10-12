@@ -61,6 +61,9 @@ export const PIPELINE_STAGES: { key: ProjectStatus; label: string }[] = [
   { key: "COMPLETED", label: "Done" },
 ];
 
+/** How scenes are generated: "i2v" = image model draws a keyframe first, "t2v" = text-to-video only. */
+export type VideoMode = "i2v" | "t2v";
+
 /** Live run state - present on both list items and full projects. */
 export interface RunState {
   status: ProjectStatus;
@@ -93,6 +96,8 @@ export interface ProjectResponse extends RunState {
   title: string | null;
   raw_prompt: string | null;
   final_video_path: string | null;
+  /** null = the server default (usually image first). */
+  video_mode: VideoMode | null;
   created_at: string;
 }
 
