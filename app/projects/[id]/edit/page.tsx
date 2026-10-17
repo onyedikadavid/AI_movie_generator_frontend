@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { RunControls } from "@/components/RunControls";
 import { ErrorDetails } from "@/components/ErrorDetails";
 import { VideoModePicker } from "@/components/VideoModePicker";
+import { NarratorToggle } from "@/components/NarratorToggle";
 import type { VideoMode } from "@/lib/types";
 
 export default function EditProjectPage() {
@@ -74,6 +75,19 @@ export default function EditProjectPage() {
       await refresh();
     } catch (e) {
       setStartError(e instanceof ApiError ? e.message : "Couldn't change the generation mode.");
+    } finally {
+      setSavingMode(false);
+    }
+  }
+
+  async function changeNarrator(on: boolean) {
+    setSavingMode(true);
+    setStartError(null);
+    try {
+      await api.updateProjectSettings(project!.id, { narrator_enabled: on });
+      await refresh();
+    } catch (e) {
+      setStartError(e instanceof ApiError ? e.message : "Couldn't change the narrator setting.");
     } finally {
       setSavingMode(false);
     }
@@ -214,6 +228,9 @@ export default function EditProjectPage() {
           {project.status === "COMPLETED" ? " Switching re-renders the scenes the next time you regenerate." : ""}
         </p>
         <VideoModePicker value={project.video_mode ?? "i2v"} onChange={changeMode} disabled={locked} busy={savingMode} />
+        <div className="mt-3">
+          <NarratorToggle value={project.narrator_enabled ?? false} onChange={changeNarrator} disabled={locked} busy={savingMode} />
+        </div>
       </section>
 
       <section>

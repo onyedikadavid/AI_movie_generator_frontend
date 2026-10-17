@@ -98,6 +98,7 @@ export interface ProjectResponse extends RunState {
   final_video_path: string | null;
   /** null = the server default (usually image first). */
   video_mode: VideoMode | null;
+  narrator_enabled: boolean | null;
   created_at: string;
 }
 
