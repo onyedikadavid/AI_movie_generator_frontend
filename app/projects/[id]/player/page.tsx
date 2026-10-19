@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle, Loader2, Pencil, RotateCcw } from "lucide-react";
+import { AlertTriangle, Download, Loader2, Pencil, RotateCcw } from "lucide-react";
 import { useProjectPolling } from "@/hooks/useProjectPolling";
-import { mediaUrl, api, ApiError } from "@/lib/api";
+import { mediaUrl, api, ApiError, downloadFile } from "@/lib/api";
 import { describeRun } from "@/lib/runState";
 import { ProgressTracker } from "@/components/ProgressTracker";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -164,10 +164,11 @@ export default function PlayerPage() {
       )}
 
       <section>
-        <h2 className="font-display text-lg text-paper">Scene keyframes</h2>
+        <h2 className="font-display text-lg text-paper">Scenes</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {project.scenes.map((scene) => {
             const img = mediaUrl(scene.image_path);
+            const clip = scene.render_status === "DONE" ? mediaUrl(scene.video_path) : null;
             return (
               <div key={scene.id} className="overflow-hidden rounded-card border border-ink-border bg-ink-surface">
                 <div className="flex aspect-video items-center justify-center bg-ink-raised text-paper-faint">
@@ -177,13 +178,27 @@ export default function PlayerPage() {
                   ) : scene.render_status === "RENDERING" && view.running ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <span className="text-[11px]">not drawn yet</span>
+                    <span className="text-[11px]">not ready yet</span>
                   )}
                 </div>
                 <div className="flex items-center justify-between px-2.5 py-1.5">
                   <span className="font-mono text-xs text-tally">{String(scene.scene_number).padStart(2, "0")}</span>
                   <span className="truncate text-xs text-paper-faint">{scene.location}</span>
                 </div>
+                {clip && (
+                  <div className="flex gap-1 border-t border-ink-border px-2.5 py-1.5">
+                    <a href={clip} target="_blank" rel="noreferrer" className="text-xs text-paper-muted hover:text-paper">
+                      Play
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => downloadFile(clip, `scene_${String(scene.scene_number).padStart(2, "0")}.mp4`)}
+                      className="ml-auto inline-flex items-center gap-1 text-xs text-tally hover:underline"
+                    >
+                      <Download className="h-3 w-3" /> Download
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

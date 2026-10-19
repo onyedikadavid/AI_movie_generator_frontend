@@ -15,6 +15,7 @@ import { RunControls } from "@/components/RunControls";
 import { ErrorDetails } from "@/components/ErrorDetails";
 import { VideoModePicker } from "@/components/VideoModePicker";
 import { NarratorToggle } from "@/components/NarratorToggle";
+import { ScenePlanFields } from "@/components/ScenePlanFields";
 import type { VideoMode } from "@/lib/types";
 
 export default function EditProjectPage() {
@@ -24,6 +25,7 @@ export default function EditProjectPage() {
   const [busyAction, setBusyAction] = useState<"start" | "fresh" | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [savingMode, setSavingMode] = useState(false);
+  const [secondsText, setSecondsText] = useState<string | null>(null);
 
   useEffect(() => {
     if (gone) router.replace("/");
@@ -75,6 +77,23 @@ export default function EditProjectPage() {
       await refresh();
     } catch (e) {
       setStartError(e instanceof ApiError ? e.message : "Couldn't change the generation mode.");
+    } finally {
+      setSavingMode(false);
+    }
+  }
+
+  async function saveSeconds() {
+    if (secondsText === null) return;
+    const n = secondsText ? Number(secondsText) : null;
+    if ((n ?? null) === (project!.scene_seconds ?? null)) { setSecondsText(null); return; }
+    setSavingMode(true);
+    setStartError(null);
+    try {
+      await api.updateProjectSettings(project!.id, { scene_seconds: n });
+      await refresh();
+      setSecondsText(null);
+    } catch (e) {
+      setStartError(e instanceof ApiError ? e.message : "Couldn't change the scene length.");
     } finally {
       setSavingMode(false);
     }
@@ -228,6 +247,19 @@ export default function EditProjectPage() {
           {project.status === "COMPLETED" ? " Switching re-renders the scenes the next time you regenerate." : ""}
         </p>
         <VideoModePicker value={project.video_mode ?? "i2v"} onChange={changeMode} disabled={locked} busy={savingMode} />
+        <div className="mt-3" onBlur={saveSeconds}>
+          <ScenePlanFields
+            hideCount
+            sceneCount=""
+            onSceneCount={() => {}}
+            sceneSeconds={secondsText ?? String(project.scene_seconds ?? "")}
+            onSceneSeconds={setSecondsText}
+            disabled={locked || savingMode}
+          />
+          <p className="mt-1 text-xs text-paper-faint">
+            This script has {project.scenes.length} scenes (chosen when the project was created).
+          </p>
+        </div>
         <div className="mt-3">
           <NarratorToggle value={project.narrator_enabled ?? false} onChange={changeNarrator} disabled={locked} busy={savingMode} />
         </div>

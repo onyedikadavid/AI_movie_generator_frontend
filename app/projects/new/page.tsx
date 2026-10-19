@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
 import { VideoModePicker } from "@/components/VideoModePicker";
 import { NarratorToggle } from "@/components/NarratorToggle";
+import { ScenePlanFields } from "@/components/ScenePlanFields";
 import type { VideoMode } from "@/lib/types";
 
 const KIDS_GENRE = "Kids / Family";
@@ -23,6 +24,8 @@ export default function NewProjectPage() {
   const [visualStyle, setVisualStyle] = useState("");
   const [videoMode, setVideoMode] = useState<VideoMode>("i2v");
   const [narrator, setNarrator] = useState(false);
+  const [sceneCount, setSceneCount] = useState("");
+  const [sceneSeconds, setSceneSeconds] = useState("");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [recording, setRecording] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -73,6 +76,8 @@ export default function NewProjectPage() {
         visualStyle: visualStyle || undefined,
         videoMode,
         narratorEnabled: narrator,
+        sceneCount: sceneCount ? Number(sceneCount) : undefined,
+        sceneSeconds: sceneSeconds ? Number(sceneSeconds) : undefined,
       });
       router.push(`/projects/${project.id}/edit`);
     } catch (e) {
@@ -169,6 +174,16 @@ export default function NewProjectPage() {
         <div>
           <p className="mb-2 text-sm font-medium text-paper">Narrator</p>
           <NarratorToggle value={narrator} onChange={setNarrator} />
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-medium text-paper">Length</p>
+          <ScenePlanFields
+            sceneCount={sceneCount}
+            onSceneCount={setSceneCount}
+            sceneSeconds={sceneSeconds}
+            onSceneSeconds={setSceneSeconds}
+          />
         </div>
 
         {error && (
