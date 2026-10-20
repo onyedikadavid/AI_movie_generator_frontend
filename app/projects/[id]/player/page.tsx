@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/Button";
 import { RunControls } from "@/components/RunControls";
 import { ErrorDetails } from "@/components/ErrorDetails";
+import { StoryCard } from "@/components/StoryCard";
 
 export default function PlayerPage() {
   const params = useParams<{ id: string }>();
@@ -162,6 +163,8 @@ export default function PlayerPage() {
           <RunControls project={project} onChanged={refresh} onDeleted={() => router.replace("/")} />
         </div>
       )}
+
+      <StoryCard script={project.script} title={project.title} />
 
       <section>
         <h2 className="font-display text-lg text-paper">Scenes</h2>

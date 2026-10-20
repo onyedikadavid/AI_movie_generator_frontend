@@ -16,6 +16,7 @@ import { ErrorDetails } from "@/components/ErrorDetails";
 import { VideoModePicker } from "@/components/VideoModePicker";
 import { NarratorToggle } from "@/components/NarratorToggle";
 import { ScenePlanFields } from "@/components/ScenePlanFields";
+import { StoryCard } from "@/components/StoryCard";
 import type { VideoMode } from "@/lib/types";
 
 export default function EditProjectPage() {
@@ -239,6 +240,8 @@ export default function EditProjectPage() {
       {startError && (
         <div className="rounded-card border border-cut/40 bg-cut/10 px-4 py-3 text-sm text-cut">{startError}</div>
       )}
+
+      <StoryCard script={project.script} title={project.title} />
 
       <section>
         <h2 className="font-display text-lg text-paper">How scenes are generated</h2>

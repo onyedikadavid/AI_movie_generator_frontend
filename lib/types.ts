@@ -111,6 +111,9 @@ export interface ScriptResponse {
   tone: string | null;
   visual_style: string | null;
   full_text: string | null;
+  story_text?: string | null;
+  story_hook?: string | null;
+  story_outline?: Record<string, string> | null;
 }
 
 export interface CharacterResponse {
