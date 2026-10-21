@@ -23,6 +23,7 @@ export function SceneRow({
   const [visual, setVisual] = useState(scene.visual_description);
   const [motion, setMotion] = useState(scene.motion_prompt || "");
   const [sound, setSound] = useState(scene.sound_design || "");
+  const [continues, setContinues] = useState(!!scene.continues_previous);
   const [narration, setNarration] = useState(scene.narration_text || "");
   const [imagePrompt, setImagePrompt] = useState(scene.image_prompt);
   const [turns, setTurns] = useState<DialogueTurn[]>(scene.dialogue_turns || []);
@@ -46,6 +47,7 @@ export function SceneRow({
         visual_description: visual,
         motion_prompt: motion,
         sound_design: sound,
+        continues_previous: continues,
         narration_text: narration,
         image_prompt: imagePrompt,
         dialogue_turns: turns,
@@ -111,6 +113,21 @@ export function SceneRow({
             <Field label="Image prompt" value={imagePrompt} onChange={markDirty(setImagePrompt)} disabled={locked} />
             <Field label="Narration (only spoken if the narrator voice is turned on)" value={narration} onChange={markDirty(setNarration)} disabled={locked} />
           </div>
+          {scene.scene_number > 1 && (
+            <label className="mt-3 flex items-start gap-2 text-xs text-paper-muted">
+              <input
+                type="checkbox"
+                checked={continues}
+                disabled={locked}
+                onChange={(e) => markDirty(setContinues)(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Carry on from the previous scene - starts from its last picture, so the same people and place continue
+                without a cut. Leave off for a new place or time.
+              </span>
+            </label>
+          )}
 
           {turns.length > 0 && (
             <div className="mt-4 space-y-2">

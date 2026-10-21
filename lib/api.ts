@@ -102,6 +102,15 @@ export const api = {
     );
   },
 
+  /** Write the next scene(s) of this story with the same characters. Leave the prompt empty for an automatic continuation. */
+  continueStory(id: string, input: { prompt?: string; sceneCount?: number }): Promise<ProjectResponse> {
+    return fetch(`${API_V1}/projects/${id}/continue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: input.prompt ?? null, scene_count: input.sceneCount ?? null }),
+    }).then(handle<ProjectResponse>);
+  },
+
   resumeProject(id: string): Promise<ProjectResponse> {
     return fetch(`${API_V1}/projects/${id}/resume`, { method: "POST" }).then(handle<ProjectResponse>);
   },

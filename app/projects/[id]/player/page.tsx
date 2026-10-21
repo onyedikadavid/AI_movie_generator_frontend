@@ -12,6 +12,7 @@ import { Button } from "@/components/Button";
 import { RunControls } from "@/components/RunControls";
 import { ErrorDetails } from "@/components/ErrorDetails";
 import { StoryCard } from "@/components/StoryCard";
+import { ContinueStoryCard } from "@/components/ContinueStoryCard";
 
 export default function PlayerPage() {
   const params = useParams<{ id: string }>();
@@ -165,6 +166,10 @@ export default function PlayerPage() {
       )}
 
       <StoryCard script={project.script} title={project.title} />
+
+      {hasScenes && !view.busy && doneScenes > 0 && (
+        <ContinueStoryCard projectId={project.id} sceneCount={project.scenes.length} />
+      )}
 
       <section>
         <h2 className="font-display text-lg text-paper">Scenes</h2>
