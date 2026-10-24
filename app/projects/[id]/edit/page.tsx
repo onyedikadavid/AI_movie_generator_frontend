@@ -15,9 +15,11 @@ import { RunControls } from "@/components/RunControls";
 import { ErrorDetails } from "@/components/ErrorDetails";
 import { VideoModePicker } from "@/components/VideoModePicker";
 import { NarratorToggle } from "@/components/NarratorToggle";
+import { SceneStylePicker } from "@/components/SceneStylePicker";
 import { ScenePlanFields } from "@/components/ScenePlanFields";
+import { ResolutionPicker } from "@/components/ResolutionPicker";
 import { StoryCard } from "@/components/StoryCard";
-import type { VideoMode } from "@/lib/types";
+import type { SceneStyle, VideoMode } from "@/lib/types";
 
 export default function EditProjectPage() {
   const params = useParams<{ id: string }>();
@@ -83,6 +85,19 @@ export default function EditProjectPage() {
     }
   }
 
+  async function changeResolution(res: string) {
+    setSavingMode(true);
+    setStartError(null);
+    try {
+      await api.updateProjectSettings(project!.id, { video_resolution: res });
+      await refresh();
+    } catch (e) {
+      setStartError(e instanceof ApiError ? e.message : "Couldn't change the video quality.");
+    } finally {
+      setSavingMode(false);
+    }
+  }
+
   async function saveSeconds() {
     if (secondsText === null) return;
     const n = secondsText ? Number(secondsText) : null;
@@ -95,6 +110,19 @@ export default function EditProjectPage() {
       setSecondsText(null);
     } catch (e) {
       setStartError(e instanceof ApiError ? e.message : "Couldn't change the scene length.");
+    } finally {
+      setSavingMode(false);
+    }
+  }
+
+  async function changeSceneStyle(style: SceneStyle) {
+    setSavingMode(true);
+    setStartError(null);
+    try {
+      await api.updateProjectSettings(project!.id, { scene_style: style });
+      await refresh();
+    } catch (e) {
+      setStartError(e instanceof ApiError ? e.message : "Couldn't change the scene style.");
     } finally {
       setSavingMode(false);
     }
@@ -250,6 +278,11 @@ export default function EditProjectPage() {
           {project.status === "COMPLETED" ? " Switching re-renders the scenes the next time you regenerate." : ""}
         </p>
         <VideoModePicker value={project.video_mode ?? "i2v"} onChange={changeMode} disabled={locked} busy={savingMode} />
+        <div className="mt-3">
+          <p className="mb-2 text-sm font-medium text-paper">Video quality</p>
+          <ResolutionPicker value={project.video_resolution ?? "960x544"} onChange={changeResolution} disabled={locked} busy={savingMode} />
+          <p className="mt-1 text-xs text-paper-faint">Smaller sizes generate much faster. Changing it re-renders finished scenes next time you generate.</p>
+        </div>
         <div className="mt-3" onBlur={saveSeconds}>
           <ScenePlanFields
             hideCount
@@ -265,6 +298,11 @@ export default function EditProjectPage() {
         </div>
         <div className="mt-3">
           <NarratorToggle value={project.narrator_enabled ?? false} onChange={changeNarrator} disabled={locked} busy={savingMode} />
+        </div>
+        <div className="mt-3">
+          <p className="mb-2 text-sm font-medium text-paper">How each scene is built</p>
+          <SceneStylePicker value={project.scene_style ?? "shots"} onChange={changeSceneStyle} disabled={locked} busy={savingMode} />
+          <p className="mt-1 text-xs text-paper-faint">Changing it re-renders finished scenes next time you generate.</p>
         </div>
       </section>
 

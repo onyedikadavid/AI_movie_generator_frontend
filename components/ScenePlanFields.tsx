@@ -21,7 +21,7 @@ export function ScenePlanFields({
   hideCount?: boolean;
   disabled?: boolean;
 }) {
-  const digits = (v: string) => v.replace(/[^0-9]/g, "").slice(0, 2);
+  const digits = (v: string, max = 2) => v.replace(/[^0-9]/g, "").slice(0, max);
   return (
     <div className={`grid grid-cols-1 gap-3 ${hideCount ? "" : "sm:grid-cols-2"}`}>
       {!hideCount && (
@@ -43,13 +43,13 @@ export function ScenePlanFields({
         <input
           inputMode="numeric"
           value={sceneSeconds}
-          onChange={(e) => onSceneSeconds(digits(e.target.value))}
+          onChange={(e) => onSceneSeconds(digits(e.target.value, 3))}
           placeholder={secondsPlaceholder}
           disabled={disabled}
           className={box}
         />
         <span className="mt-1 block text-xs text-paper-faint">
-          3 to 30. Each scene is made as one clip this long. Your video server also has its own maximum, and longer scenes take much longer to generate.
+          3 to 120. Each scene is made as one clip this long. Your video server also has its own maximum, and longer scenes take much longer to generate.
         </span>
       </label>
     </div>

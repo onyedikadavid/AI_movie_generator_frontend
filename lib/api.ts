@@ -66,6 +66,8 @@ export const api = {
     narratorEnabled?: boolean;
     sceneCount?: number;
     sceneSeconds?: number;
+    videoResolution?: string;
+    sceneStyle?: string;
   }): Promise<ProjectResponse> {
     const form = new FormData();
     if (input.prompt) form.append("prompt", input.prompt);
@@ -76,13 +78,15 @@ export const api = {
     if (input.videoMode) form.append("video_mode", input.videoMode);
     if (input.sceneCount) form.append("scene_count", String(input.sceneCount));
     if (input.sceneSeconds) form.append("scene_seconds", String(input.sceneSeconds));
+    if (input.videoResolution) form.append("video_resolution", input.videoResolution);
+    if (input.sceneStyle) form.append("scene_style", input.sceneStyle);
     if (input.narratorEnabled !== undefined) form.append("narrator_enabled", String(input.narratorEnabled));
 
     return fetch(`${API_V1}/projects`, { method: "POST", body: form }).then(handle<ProjectResponse>);
   },
 
   /** Change how the project is generated (image first vs text-to-video). Takes effect on the next run. */
-  updateProjectSettings(id: string, payload: { video_mode?: VideoMode; narrator_enabled?: boolean; scene_seconds?: number | null }): Promise<ProjectResponse> {
+  updateProjectSettings(id: string, payload: { video_mode?: VideoMode; narrator_enabled?: boolean; scene_seconds?: number | null; video_resolution?: string | null; scene_style?: string }): Promise<ProjectResponse> {
     return fetch(`${API_V1}/projects/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

@@ -7,8 +7,10 @@ import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
 import { VideoModePicker } from "@/components/VideoModePicker";
 import { NarratorToggle } from "@/components/NarratorToggle";
+import { SceneStylePicker } from "@/components/SceneStylePicker";
 import { ScenePlanFields } from "@/components/ScenePlanFields";
-import type { VideoMode } from "@/lib/types";
+import { ResolutionPicker } from "@/components/ResolutionPicker";
+import type { SceneStyle, VideoMode } from "@/lib/types";
 
 const KIDS_GENRE = "Kids / Family";
 const KIDS_STYLE = "Kids cartoon (child-friendly)";
@@ -24,8 +26,10 @@ export default function NewProjectPage() {
   const [visualStyle, setVisualStyle] = useState("");
   const [videoMode, setVideoMode] = useState<VideoMode>("i2v");
   const [narrator, setNarrator] = useState(false);
+  const [sceneStyle, setSceneStyle] = useState<SceneStyle>("whole");
   const [sceneCount, setSceneCount] = useState("");
   const [sceneSeconds, setSceneSeconds] = useState("");
+  const [resolution, setResolution] = useState("960x544");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [recording, setRecording] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -76,8 +80,10 @@ export default function NewProjectPage() {
         visualStyle: visualStyle || undefined,
         videoMode,
         narratorEnabled: narrator,
+        sceneStyle,
         sceneCount: sceneCount ? Number(sceneCount) : undefined,
         sceneSeconds: sceneSeconds ? Number(sceneSeconds) : undefined,
+        videoResolution: resolution,
       });
       router.push(`/projects/${project.id}/edit`);
     } catch (e) {
@@ -174,6 +180,18 @@ export default function NewProjectPage() {
         <div>
           <p className="mb-2 text-sm font-medium text-paper">Narrator</p>
           <NarratorToggle value={narrator} onChange={setNarrator} />
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-medium text-paper">How each scene is built</p>
+          <SceneStylePicker value={sceneStyle} onChange={setSceneStyle} />
+          <p className="mt-1 text-xs text-paper-faint">You can change this later on the review screen.</p>
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-medium text-paper">Video quality</p>
+          <ResolutionPicker value={resolution} onChange={setResolution} />
+          <p className="mt-1 text-xs text-paper-faint">Smaller sizes generate much faster. You can change this later on the review screen.</p>
         </div>
 
         <div>
