@@ -27,6 +27,7 @@ export default function NewProjectPage() {
   const [videoMode, setVideoMode] = useState<VideoMode>("i2v");
   const [narrator, setNarrator] = useState(false);
   const [sceneStyle, setSceneStyle] = useState<SceneStyle>("whole");
+  const [filmMinutes, setFilmMinutes] = useState("");
   const [sceneCount, setSceneCount] = useState("");
   const [sceneSeconds, setSceneSeconds] = useState("");
   const [resolution, setResolution] = useState("960x544");
@@ -69,6 +70,13 @@ export default function NewProjectPage() {
       setError("Describe your idea in text or record a voice note first.");
       return;
     }
+    const chunk = Number(sceneSeconds) > 0 ? Number(sceneSeconds) : 8;
+    const filmSeconds = Number(filmMinutes) * 60;
+    if (sceneStyle === "film" && !(filmSeconds > 0)) {
+      setError("Enter how long the film should be, in minutes.");
+      return;
+    }
+    const parts = sceneStyle === "film" ? Math.max(2, Math.min(200, Math.ceil(filmSeconds / chunk))) : undefined;
     setSubmitting(true);
     setError(null);
     try {
@@ -81,8 +89,8 @@ export default function NewProjectPage() {
         videoMode,
         narratorEnabled: narrator,
         sceneStyle,
-        sceneCount: sceneCount ? Number(sceneCount) : undefined,
-        sceneSeconds: sceneSeconds ? Number(sceneSeconds) : undefined,
+        sceneCount: parts ?? (sceneCount ? Number(sceneCount) : undefined),
+        sceneSeconds: sceneStyle === "film" ? chunk : sceneSeconds ? Number(sceneSeconds) : undefined,
         videoResolution: resolution,
       });
       router.push(`/projects/${project.id}/edit`);
@@ -185,7 +193,7 @@ export default function NewProjectPage() {
         <div>
           <p className="mb-2 text-sm font-medium text-paper">How each scene is built</p>
           <SceneStylePicker value={sceneStyle} onChange={setSceneStyle} />
-          <p className="mt-1 text-xs text-paper-faint">You can change this later on the review screen.</p>
+          <p className="mt-1 text-xs text-paper-faint">You can change this later on the review screen. "Full film" is planned when the project is created.</p>
         </div>
 
         <div>
@@ -196,11 +204,31 @@ export default function NewProjectPage() {
 
         <div>
           <p className="mb-2 text-sm font-medium text-paper">Length</p>
+          {sceneStyle === "film" && (
+            <label className="mb-3 block">
+              <span className="mb-1 block text-sm font-medium text-paper">Film length (minutes)</span>
+              <input
+                inputMode="decimal"
+                value={filmMinutes}
+                onChange={(e) => setFilmMinutes(e.target.value.replace(/[^0-9.]/g, "").slice(0, 5))}
+                placeholder="e.g. 2"
+                className="w-full rounded-card border border-ink-border bg-ink-surface px-3 py-2 text-sm text-paper placeholder:text-paper-faint focus:border-tally focus:outline-none"
+              />
+              <span className="mt-1 block text-xs text-paper-faint">
+                {Number(filmMinutes) > 0
+                  ? `About ${Math.max(2, Math.min(200, Math.ceil((Number(filmMinutes) * 60) / (Number(sceneSeconds) > 0 ? Number(sceneSeconds) : 8))))} parts of ${Number(sceneSeconds) > 0 ? Number(sceneSeconds) : 8} s, joined into one video. `
+                  : ""}
+                Every part is generated one after another, so a long film takes a long time on a small GPU. Try 1 to 2 minutes first.
+              </span>
+            </label>
+          )}
           <ScenePlanFields
+            hideCount={sceneStyle === "film"}
             sceneCount={sceneCount}
             onSceneCount={setSceneCount}
             sceneSeconds={sceneSeconds}
             onSceneSeconds={setSceneSeconds}
+            secondsPlaceholder={sceneStyle === "film" ? "8" : "Auto"}
           />
         </div>
 

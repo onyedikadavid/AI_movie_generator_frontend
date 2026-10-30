@@ -63,7 +63,7 @@ export const PIPELINE_STAGES: { key: ProjectStatus; label: string }[] = [
 
 /** How scenes are generated: "i2v" = image model draws a keyframe first, "t2v" = text-to-video only. */
 export type VideoMode = "i2v" | "t2v";
-export type SceneStyle = "whole" | "shots" | "reuse";
+export type SceneStyle = "whole" | "shots" | "reuse" | "film";
 
 /** Live run state - present on both list items and full projects. */
 export interface RunState {

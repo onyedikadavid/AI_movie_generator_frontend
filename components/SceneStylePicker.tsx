@@ -1,6 +1,6 @@
 "use client";
 
-import { Clapperboard, Layers, Scissors } from "lucide-react";
+import { Clapperboard, Film, Layers, Scissors } from "lucide-react";
 import type { SceneStyle } from "@/lib/types";
 
 export const SCENE_STYLE_OPTIONS: { value: SceneStyle; title: string; blurb: string; Icon: typeof Clapperboard }[] = [
@@ -22,6 +22,12 @@ export const SCENE_STYLE_OPTIONS: { value: SceneStyle; title: string; blurb: str
     blurb: "One short clip per scene is cut into all its shots and the voices are added on top. Fastest, but lips won't match the words.",
     Icon: Layers,
   },
+  {
+    value: "film",
+    title: "Full film",
+    blurb: "One prompt becomes a whole film. The writer plans many short parts, each carries on from the last frame of the one before, and they are joined into one video. You set the total length.",
+    Icon: Film,
+  },
 ];
 
 export function SceneStylePicker({
@@ -36,7 +42,7 @@ export function SceneStylePicker({
   busy?: boolean;
 }) {
   return (
-    <div role="radiogroup" aria-label="How each scene is built" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div role="radiogroup" aria-label="How each scene is built" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {SCENE_STYLE_OPTIONS.map(({ value: v, title, blurb, Icon }) => {
         const selected = v === value;
         return (

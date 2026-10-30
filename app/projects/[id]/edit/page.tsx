@@ -302,7 +302,10 @@ export default function EditProjectPage() {
         <div className="mt-3">
           <p className="mb-2 text-sm font-medium text-paper">How each scene is built</p>
           <SceneStylePicker value={project.scene_style ?? "shots"} onChange={changeSceneStyle} disabled={locked} busy={savingMode} />
-          <p className="mt-1 text-xs text-paper-faint">Changing it re-renders finished scenes next time you generate.</p>
+          <p className="mt-1 text-xs text-paper-faint">
+            Changing it re-renders finished scenes next time you generate.
+            {project.scene_style === "film" ? " A full film is planned when the project is created, so it can't be lengthened here - use Continue the story to add more." : ""}
+          </p>
         </div>
       </section>
 
