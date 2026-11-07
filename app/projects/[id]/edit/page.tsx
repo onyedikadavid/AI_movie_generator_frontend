@@ -9,6 +9,7 @@ import { api, ApiError } from "@/lib/api";
 import { describeRun } from "@/lib/runState";
 import { CharacterCard } from "@/components/CharacterCard";
 import { SceneRow } from "@/components/SceneRow";
+import { PlaceCard } from "@/components/PlaceCard";
 import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { RunControls } from "@/components/RunControls";
@@ -312,7 +313,7 @@ export default function EditProjectPage() {
       <section>
         <h2 className="font-display text-lg text-paper">Cast</h2>
         <p className="text-sm text-paper-muted">
-          Each character keeps one look and one voice across every scene. Check the gender - it chooses the voice.
+          Each character keeps one face, one voice and the right outfit for each place across every scene. Check the gender - it chooses the voice.
         </p>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {project.characters.map((c) => (
@@ -320,6 +321,29 @@ export default function EditProjectPage() {
           ))}
         </div>
       </section>
+
+      {(project.locations?.length ?? 0) > 0 && (
+        <section>
+          <h2 className="font-display text-lg text-paper">Places</h2>
+          <p className="text-sm text-paper-muted">
+            Each place is described once and drawn the same way every time a scene is set there. If two entries are really
+            the same place, merge them.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {project.locations!.map((l) => (
+              <PlaceCard
+                key={l.id}
+                projectId={project.id}
+                place={l}
+                scenes={project.scenes.filter((s) => s.location_id === l.id)}
+                others={project.locations!.filter((o) => o.id !== l.id)}
+                locked={locked}
+                onSaved={refresh}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="font-display text-lg text-paper">Shot list</h2>

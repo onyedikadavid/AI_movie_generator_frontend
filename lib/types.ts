@@ -129,6 +129,20 @@ export interface CharacterResponse {
   gender: string | null;
   age_group: string | null;
   voice_id: string | null;
+  /** Character bible: what never changes, the usual outfit, and outfits per place ({place key: clothing}). */
+  core_look?: string | null;
+  outfit?: string | null;
+  outfits?: Record<string, string> | null;
+}
+
+/** One place in the scene bible: every scene set there reuses this description. */
+export interface LocationResponse {
+  id: string;
+  project_id: string;
+  key: string;
+  name: string;
+  description: string;
+  reference_image_path: string | null;
 }
 
 export interface DialogueTurn {
@@ -150,6 +164,7 @@ export interface SceneResponse {
   motion_prompt: string | null;
   sound_design: string | null;
   continues_previous?: boolean | null;
+  location_id?: string | null;
   image_path: string | null;
   video_path: string | null;
   audio_path: string | null;
@@ -161,6 +176,7 @@ export interface SceneResponse {
 export interface ProjectDetail extends ProjectResponse {
   script: ScriptResponse | null;
   characters: CharacterResponse[];
+  locations?: LocationResponse[];
   scenes: SceneResponse[];
 }
 
@@ -173,6 +189,7 @@ export interface SceneUpdatePayload {
   motion_prompt?: string;
   sound_design?: string;
   continues_previous?: boolean;
+  location_id?: string | null;
   dialogue_turns?: DialogueTurn[];
 }
 
@@ -182,6 +199,14 @@ export interface CharacterUpdatePayload {
   appearance_prompt?: string;
   gender?: string;
   age_group?: string;
+  core_look?: string;
+  outfit?: string;
+  outfits?: Record<string, string>;
+}
+
+export interface LocationUpdatePayload {
+  name?: string;
+  description?: string;
 }
 
 export interface QueueEntry {

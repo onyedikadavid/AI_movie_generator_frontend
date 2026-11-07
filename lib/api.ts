@@ -3,6 +3,8 @@ import type {
   DeleteResult,
   QueueSnapshot,
   CharacterUpdatePayload,
+  LocationResponse,
+  LocationUpdatePayload,
   HealthResponse,
   ProjectDetail,
   ProjectListItem,
@@ -149,6 +151,24 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     }).then(handle<CharacterResponse>);
+  },
+
+  /** Edit a place in the scene bible. Every scene set there is re-rendered with the new description. */
+  updateLocation(projectId: string, locationId: string, payload: LocationUpdatePayload): Promise<LocationResponse> {
+    return fetch(`${API_V1}/projects/${projectId}/locations/${locationId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then(handle<LocationResponse>);
+  },
+
+  /** Two entries that are really one place: scenes move from `fromId` into `intoId`. */
+  mergeLocations(projectId: string, fromId: string, intoId: string): Promise<LocationResponse> {
+    return fetch(`${API_V1}/projects/${projectId}/locations/merge`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ from_id: fromId, into_id: intoId }),
+    }).then(handle<LocationResponse>);
   },
 };
 

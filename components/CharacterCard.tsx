@@ -34,6 +34,8 @@ export function CharacterCard({
   const [appearance, setAppearance] = useState(character.appearance_prompt);
   const [gender, setGender] = useState(character.gender || "");
   const [age, setAge] = useState(character.age_group || "");
+  const [coreLook, setCoreLook] = useState(character.core_look || "");
+  const [outfit, setOutfit] = useState(character.outfit || "");
 
   async function save() {
     setSaving(true);
@@ -42,6 +44,8 @@ export function CharacterCard({
       await api.updateCharacter(projectId, character.id, {
         description,
         appearance_prompt: appearance,
+        ...(coreLook.trim() ? { core_look: coreLook.trim() } : {}),
+        ...(outfit.trim() ? { outfit: outfit.trim() } : {}),
         ...(gender ? { gender } : {}),
         ...(age ? { age_group: age } : {}),
       });
@@ -86,7 +90,9 @@ export function CharacterCard({
             <Select label="Age" value={age} onChange={setAge} options={AGES} placeholder="Auto" />
           </div>
           <Field label="Personality / role" value={description} onChange={setDescription} />
-          <Field label="Appearance (for image consistency)" value={appearance} onChange={setAppearance} />
+          <Field label="Face, hair, build - never changes (story bible)" value={coreLook} onChange={setCoreLook} />
+          <Field label="Usual outfit" value={outfit} onChange={setOutfit} />
+          <Field label="Appearance (older single description, used if the two above are empty)" value={appearance} onChange={setAppearance} />
           {error && <p className="text-xs text-cut">{error}</p>}
           <div className="mt-1 flex justify-end gap-2">
             <button
@@ -97,6 +103,8 @@ export function CharacterCard({
                 setAppearance(character.appearance_prompt);
                 setGender(character.gender || "");
                 setAge(character.age_group || "");
+                setCoreLook(character.core_look || "");
+                setOutfit(character.outfit || "");
               }}
               className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-paper-muted hover:bg-ink-raised"
             >
@@ -114,7 +122,29 @@ export function CharacterCard({
       ) : (
         <div className="mt-2 space-y-1.5">
           <p className="text-sm text-paper-muted">{character.description}</p>
-          <p className="text-xs text-paper-faint">{character.appearance_prompt}</p>
+          {character.core_look ? (
+            <>
+              <p className="text-xs text-paper-faint">
+                <span className="text-paper-muted">Always: </span>
+                {character.core_look}
+              </p>
+              {character.outfit && (
+                <p className="text-xs text-paper-faint">
+                  <span className="text-paper-muted">Usually wears: </span>
+                  {character.outfit}
+                </p>
+              )}
+              {character.outfits &&
+                Object.entries(character.outfits).map(([place, clothes]) => (
+                  <p key={place} className="text-xs text-paper-faint">
+                    <span className="text-paper-muted">In {place.replace(/-/g, " ")}: </span>
+                    {clothes}
+                  </p>
+                ))}
+            </>
+          ) : (
+            <p className="text-xs text-paper-faint">{character.appearance_prompt}</p>
+          )}
         </div>
       )}
     </div>
