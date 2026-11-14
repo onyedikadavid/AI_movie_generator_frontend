@@ -70,6 +70,7 @@ export const api = {
     sceneSeconds?: number;
     videoResolution?: string;
     sceneStyle?: string;
+    generationMode?: "script" | "direct";
   }): Promise<ProjectResponse> {
     const form = new FormData();
     if (input.prompt) form.append("prompt", input.prompt);
@@ -82,6 +83,7 @@ export const api = {
     if (input.sceneSeconds) form.append("scene_seconds", String(input.sceneSeconds));
     if (input.videoResolution) form.append("video_resolution", input.videoResolution);
     if (input.sceneStyle) form.append("scene_style", input.sceneStyle);
+    if (input.generationMode) form.append("generation_mode", input.generationMode);
     if (input.narratorEnabled !== undefined) form.append("narrator_enabled", String(input.narratorEnabled));
 
     return fetch(`${API_V1}/projects`, { method: "POST", body: form }).then(handle<ProjectResponse>);

@@ -165,9 +165,9 @@ export default function PlayerPage() {
         </div>
       )}
 
-      <StoryCard script={project.script} title={project.title} />
+      {project.generation_mode !== "direct" && <StoryCard script={project.script} title={project.title} />}
 
-      {hasScenes && !view.busy && doneScenes > 0 && (
+      {hasScenes && !view.busy && doneScenes > 0 && project.generation_mode !== "direct" && (
         <ContinueStoryCard projectId={project.id} sceneCount={project.scenes.length} />
       )}
 

@@ -10,7 +10,8 @@ import { NarratorToggle } from "@/components/NarratorToggle";
 import { SceneStylePicker } from "@/components/SceneStylePicker";
 import { ScenePlanFields } from "@/components/ScenePlanFields";
 import { ResolutionPicker } from "@/components/ResolutionPicker";
-import type { SceneStyle, VideoMode } from "@/lib/types";
+import { GenerationModePicker } from "@/components/GenerationModePicker";
+import type { GenerationMode, SceneStyle, VideoMode } from "@/lib/types";
 
 const KIDS_GENRE = "Kids / Family";
 const KIDS_STYLE = "Kids cartoon (child-friendly)";
@@ -20,6 +21,8 @@ const STYLES = ["", "Cinematic", KIDS_STYLE, "Photorealistic", "Anime", "Waterco
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const [mode, setMode] = useState<GenerationMode>("script");
+  const direct = mode === "direct";
   const [prompt, setPrompt] = useState("");
   const [genre, setGenre] = useState("");
   const [tone, setTone] = useState("");
@@ -70,13 +73,17 @@ export default function NewProjectPage() {
       setError("Describe your idea in text or record a voice note first.");
       return;
     }
+    if (direct && !prompt.trim()) {
+      setError("Straight to video needs your idea typed in (a voice note is only turned into text by the script route).");
+      return;
+    }
     const chunk = Number(sceneSeconds) > 0 ? Number(sceneSeconds) : 8;
     const filmSeconds = Number(filmMinutes) * 60;
-    if (sceneStyle === "film" && !(filmSeconds > 0)) {
+    if (!direct && sceneStyle === "film" && !(filmSeconds > 0)) {
       setError("Enter how long the film should be, in minutes.");
       return;
     }
-    const parts = sceneStyle === "film" ? Math.max(2, Math.min(200, Math.ceil(filmSeconds / chunk))) : undefined;
+    const parts = !direct && sceneStyle === "film" ? Math.max(2, Math.min(200, Math.ceil(filmSeconds / chunk))) : undefined;
     setSubmitting(true);
     setError(null);
     try {
@@ -86,14 +93,16 @@ export default function NewProjectPage() {
         genre: genre || undefined,
         tone: tone || undefined,
         visualStyle: visualStyle || undefined,
-        videoMode,
-        narratorEnabled: narrator,
-        sceneStyle,
+        generationMode: mode,
+        videoMode: direct ? "t2v" : videoMode,
+        narratorEnabled: direct ? false : narrator,
+        sceneStyle: direct ? "whole" : sceneStyle,
         sceneCount: parts ?? (sceneCount ? Number(sceneCount) : undefined),
-        sceneSeconds: sceneStyle === "film" ? chunk : sceneSeconds ? Number(sceneSeconds) : undefined,
+        sceneSeconds: !direct && sceneStyle === "film" ? chunk : sceneSeconds ? Number(sceneSeconds) : undefined,
         videoResolution: resolution,
       });
-      router.push(`/projects/${project.id}/edit`);
+      // A straight-to-video project is already rendering: watch it on the player page, not the script review.
+      router.push(direct ? `/projects/${project.id}/player` : `/projects/${project.id}/edit`);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Something went wrong creating the project.");
       setSubmitting(false);
@@ -104,10 +113,17 @@ export default function NewProjectPage() {
     <div className="mx-auto max-w-2xl">
       <h1 className="font-display text-3xl text-paper">Create a new video</h1>
       <p className="mt-1 text-sm text-paper-muted">
-        Describe your idea, or record it. We&apos;ll break it into a script, cast, and shot list you can review before anything renders.
+        {direct
+          ? "Describe the video you want: who is in it, where, what happens and how the camera moves. It goes straight to the video model."
+          : "Describe your idea, or record it. We\u2019ll break it into a script, cast, and shot list you can review before anything renders."}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-6">
+        <div>
+          <p className="mb-2 text-sm font-medium text-paper">What do you want to do?</p>
+          <GenerationModePicker value={mode} onChange={setMode} disabled={submitting} />
+        </div>
+
         <div>
           <label htmlFor="prompt" className="block text-sm font-medium text-paper">
             Your idea
@@ -122,7 +138,7 @@ export default function NewProjectPage() {
           />
 
           <div className="mt-3 flex items-center gap-3">
-            {!audioFile && !recording && (
+            {!direct && !audioFile && !recording && (
               <button
                 type="button"
                 onClick={startRecording}
@@ -151,6 +167,7 @@ export default function NewProjectPage() {
           </div>
         </div>
 
+        {!direct && (
         <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <legend className="mb-1 text-sm font-medium text-paper sm:col-span-3">
             Optional stylistic direction
@@ -178,7 +195,9 @@ export default function NewProjectPage() {
             </p>
           )}
         </fieldset>
+        )}
 
+        {!direct && (<>
         <div>
           <p className="mb-2 text-sm font-medium text-paper">How should scenes be generated?</p>
           <VideoModePicker value={videoMode} onChange={setVideoMode} />
@@ -195,6 +214,7 @@ export default function NewProjectPage() {
           <SceneStylePicker value={sceneStyle} onChange={setSceneStyle} />
           <p className="mt-1 text-xs text-paper-faint">You can change this later on the review screen. "Full film" is planned when the project is created.</p>
         </div>
+        </>)}
 
         <div>
           <p className="mb-2 text-sm font-medium text-paper">Video quality</p>
@@ -204,7 +224,7 @@ export default function NewProjectPage() {
 
         <div>
           <p className="mb-2 text-sm font-medium text-paper">Length</p>
-          {sceneStyle === "film" && (
+          {!direct && sceneStyle === "film" && (
             <label className="mb-3 block">
               <span className="mb-1 block text-sm font-medium text-paper">Film length (minutes)</span>
               <input
@@ -222,13 +242,19 @@ export default function NewProjectPage() {
               </span>
             </label>
           )}
+          {direct && (
+            <p className="mb-3 text-xs text-paper-faint">
+              Seconds per clip is how long the video is (the video server&apos;s own limit still applies). Choose more than one clip to
+              make a longer video: each clip carries on from the last picture of the one before.
+            </p>
+          )}
           <ScenePlanFields
-            hideCount={sceneStyle === "film"}
+            hideCount={!direct && sceneStyle === "film"}
             sceneCount={sceneCount}
             onSceneCount={setSceneCount}
             sceneSeconds={sceneSeconds}
             onSceneSeconds={setSceneSeconds}
-            secondsPlaceholder={sceneStyle === "film" ? "8" : "Auto"}
+            secondsPlaceholder={!direct && sceneStyle === "film" ? "8" : "Auto"}
           />
         </div>
 
@@ -238,7 +264,7 @@ export default function NewProjectPage() {
 
         <div className="flex justify-end">
           <Button type="submit" loading={submitting}>
-            {submitting ? "Breaking down your story…" : "Generate script"}
+            {direct ? (submitting ? "Starting the video…" : "Generate video") : submitting ? "Breaking down your story…" : "Generate script"}
           </Button>
         </div>
       </form>

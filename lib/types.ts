@@ -64,6 +64,8 @@ export const PIPELINE_STAGES: { key: ProjectStatus; label: string }[] = [
 /** How scenes are generated: "i2v" = image model draws a keyframe first, "t2v" = text-to-video only. */
 export type VideoMode = "i2v" | "t2v";
 export type SceneStyle = "whole" | "shots" | "reuse" | "film";
+/** "script" = the writer model writes a script first; "direct" = straight to the video model (no script, no Ollama). */
+export type GenerationMode = "script" | "direct";
 
 /** Live run state - present on both list items and full projects. */
 export interface RunState {
@@ -104,6 +106,7 @@ export interface ProjectResponse extends RunState {
   scene_seconds: number | null;
   video_resolution: string | null;
   scene_style: SceneStyle | null;
+  generation_mode?: GenerationMode | null;
   created_at: string;
 }
 
